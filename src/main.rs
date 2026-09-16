@@ -3,12 +3,16 @@ use std::collections::HashMap;
 struct  Tokenizer {
     token_to_id: HashMap<String, usize>,
     id_to_token: HashMap<usize, String>,
-    token_id: usize,
+    next_id: usize,
 }
 
 impl Tokenizer {
     fn new() -> Self {
-        Self { token_to_id: HashMap::new(), id_to_token: HashMap::new(), token_id: 1 }
+        // Initialize a tokenizer
+        let mut tokenizer = Self { token_to_id: HashMap::new(),
+             id_to_token: HashMap::new(), next_id: 1 };
+        tokenizer.add_special_tokens();
+        tokenizer
     }
 
     // Add the special tokens, call it after initialisation
@@ -20,11 +24,11 @@ impl Tokenizer {
     fn train(&mut self, text: &str) {
         // Iterate through the text and map each word
         for word in text.split_whitespace() {
-            let token = word.to_string();
-            if !self.token_to_id.contains_key(&token) {
-                self.token_to_id.insert(token.clone(), self.token_id);
-                self.id_to_token.insert(self.token_id, token);
-                self.token_id+=1;
+            if !self.token_to_id.contains_key(word) {
+                let token = word.to_string();
+                self.token_to_id.insert(token.clone(), self.next_id);
+                self.id_to_token.insert(self.next_id, token);
+                self.next_id+=1;
             }
         }
     }
@@ -52,6 +56,12 @@ impl Tokenizer {
         }
         word_list.join(" ")
     }
+
+    fn tokenize_and_decode(&self, text: &str) ->String {
+        let token_id_list = self.encode(text);
+        let tokenized_text = self.decode(token_id_list);
+        tokenized_text
+    }
 }
 
 
@@ -60,13 +70,8 @@ fn main() {
 
     let mut tokenizer = Tokenizer::new();
 
-    tokenizer.add_special_tokens();
     tokenizer.train(&text);
 
-    let id_list = tokenizer.encode("Angena gatram laudena bhojyam");
-    println!("{:?}", id_list);
-
-    let tokenized_text = tokenizer.decode(id_list);
+    let tokenized_text = tokenizer.tokenize_and_decode("Angena gatram laudena bhojyam");
     println!("{:?}", tokenized_text);
-
 }
